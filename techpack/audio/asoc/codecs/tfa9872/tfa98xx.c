@@ -3430,13 +3430,13 @@ static void tfa98xx_interrupt(struct work_struct *work)
 			int no_clk = TFA_GET_BF(tfa98xx->handle, NOCLK);
 			/* Detect for clock is lost! (clock is not stable) */
 			if ((tfa98xx->handle == 0) && (no_clk == 1)) {
-				enum tfa98xx_error err;
+				enum tfa_error err;
 				/* Clock is lost. Set I2CR to remove POP noise */
 				pr_info("No clock detected. Resetting I2CR to avoid pop on 72!\n");
 				err = tfa98xx_tfa_start
 					(tfa98xx, tfa98xx_profile,
 					tfa98xx_vsteps);
-				if (err != TFA98XX_ERROR_OK)
+				if (err != tfa_error_ok)
 					pr_err("Error loading i2c registers (tfa_start), err=%d\n",
 						err);
 				else
