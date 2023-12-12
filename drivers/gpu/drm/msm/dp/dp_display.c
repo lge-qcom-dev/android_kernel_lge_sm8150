@@ -3329,7 +3329,7 @@ bail:
 	return rc;
 }
 #if IS_ENABLED(CONFIG_LGE_COVER_DISPLAY) || IS_ENABLED(CONFIG_LGE_DUAL_SCREEN)
-bool is_dp_connected()
+bool is_dp_connected(void)
 {
 	struct dp_display* dp_display;
 	struct dp_display_private *dp;
@@ -3343,7 +3343,7 @@ EXPORT_SYMBOL(is_dp_connected);
 #endif
 
 #if IS_ENABLED(CONFIG_LGE_COVER_DISPLAY)
-bool is_dd_connected()
+bool is_dd_connected(void)
 {
 	struct dp_display* dp_display;
 	struct dp_display_private *dp;
@@ -3363,7 +3363,7 @@ bool is_dd_connected()
 }
 EXPORT_SYMBOL(is_dd_connected);
 
-bool is_dd_display_recovery_working()
+bool is_dd_display_recovery_working(void)
 {
 	struct dp_display* dp_display;
 	struct dp_display_private *dp;
@@ -3383,7 +3383,7 @@ bool is_dd_display_recovery_working()
 }
 EXPORT_SYMBOL(is_dd_display_recovery_working);
 
-bool is_dd_powermode()
+bool is_dd_powermode(void)
 {
 	struct dp_display* dp_display;
 	struct dp_display_private *dp;
