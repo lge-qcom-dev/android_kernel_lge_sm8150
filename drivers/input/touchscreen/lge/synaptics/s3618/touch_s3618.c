@@ -1021,6 +1021,7 @@ static int s3618_report_lpwg(struct device *dev)
 			ts->intr_status = TOUCH_IRQ_LPWG_LONGPRESS_DOWN;
 #endif
 			d->longpress_uevent_status = ts->intr_status;
+			sysfs_notify(&ts->kobj, NULL, "udfps_pressed");
 			break;
 		case DETECT_LONG_PRESS_UP:
 			ret = s3618_get_lpwg_data(dev, 1);
@@ -4251,6 +4252,25 @@ static ssize_t store_longpress(struct device *dev,
 
 	mutex_lock(&ts->lock);
 
+	/*
+		Sometimes longpress is enabled when the panel is in deep sleep.
+		We need to enable the panel in this case.
+
+		Construct parameters based on what LPWG_UPDATE_ALL sets in s3618_lpwg().
+		We need these to be what is currently set in order to not break other things, i.e. double tap.
+	*/
+	int lpwg_param[4] = {
+		ts->lpwg.mode,
+		ts->lpwg.screen,
+		ts->lpwg.sensor,
+		ts->lpwg.qcover
+	};
+	ret = s3618_lpwg(dev, LPWG_UPDATE_ALL, lpwg_param);
+	if (ret < 0) {
+		TOUCH_E("s3618_lpwg() failed (ret: %d)\n", ret);
+		mutex_unlock(&ts->lock);
+		return count;
+	}
 	ret = s3618_lpwg_longpress_enable(dev, d->lpwg_longpress.enable);
 	if (ret < 0)
 		TOUCH_E("failed to set lpwg_longpress enable (ret: %d)\n", ret);
@@ -4336,6 +4356,14 @@ static ssize_t store_onetap(struct device *dev,
 	return count;
 }
 
+int udfps_pressed_status = 0;
+
+static ssize_t show_udfps_pressed(struct device *dev, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%d\n", udfps_pressed_status);
+}
+
+static TOUCH_ATTR(udfps_pressed, show_udfps_pressed, NULL);
 static TOUCH_ATTR(reset_ctrl, NULL, store_reset_ctrl);
 static TOUCH_ATTR(gpio_pin, show_gpio_pin, NULL);
 static TOUCH_ATTR(lpwg_abs, show_lpwg_abs, store_lpwg_abs);
@@ -4350,6 +4378,7 @@ static struct attribute *s3618_attribute_list[] = {
 	&touch_attr_ai_pick.attr,
 	&touch_attr_longpress.attr,
 	&touch_attr_onetap.attr,
+	&touch_attr_udfps_pressed.attr,
 	NULL,
 };
 
