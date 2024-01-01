@@ -565,7 +565,7 @@
 				qcom,mdss-dsc-encoders = <2>;
 				qcom,mdss-dsc-block-prediction-enable;
 			};
-			timing@1 {
+			/* timing@1 {
 				qcom,partial-update-enabled = "single_roi";
 				qcom,panel-roi-alignment = <1080 60 1080 60 1080 60>;
 				qcom,mdss-dsi-panel-phy-timings = [00 1D 07 07 23 22 07 07 05 02 04 00 18 17];
@@ -1140,7 +1140,7 @@
 				qcom,lm-split = <360 360>;
 				qcom,mdss-dsc-encoders = <2>;
 				qcom,mdss-dsc-block-prediction-enable;
-			};
+			}; */
 		};
 	};
 };
