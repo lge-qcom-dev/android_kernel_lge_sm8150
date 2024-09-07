@@ -169,12 +169,14 @@ static void lp5523_load_engine(struct lp55xx_chip *chip)
 {
 	enum lp55xx_engine_index idx = chip->engine_idx;
 	static const u8 mask[] = {
+		[LP55XX_ENGINE_INVALID] = 0,
 		[LP55XX_ENGINE_1] = LP5523_MODE_ENG1_M,
 		[LP55XX_ENGINE_2] = LP5523_MODE_ENG2_M,
 		[LP55XX_ENGINE_3] = LP5523_MODE_ENG3_M,
 	};
 
 	static const u8 val[] = {
+		[LP55XX_ENGINE_INVALID] = 0,
 		[LP55XX_ENGINE_1] = LP5523_LOAD_ENG1,
 		[LP55XX_ENGINE_2] = LP5523_LOAD_ENG2,
 		[LP55XX_ENGINE_3] = LP5523_LOAD_ENG3,
@@ -189,6 +191,7 @@ static void lp5523_load_engine_and_select_page(struct lp55xx_chip *chip)
 {
 	enum lp55xx_engine_index idx = chip->engine_idx;
 	static const u8 page_sel[] = {
+		[LP55XX_ENGINE_INVALID] = 0,
 		[LP55XX_ENGINE_1] = LP5523_PAGE_ENG1,
 		[LP55XX_ENGINE_2] = LP5523_PAGE_ENG2,
 		[LP55XX_ENGINE_3] = LP5523_PAGE_ENG3,
@@ -209,6 +212,7 @@ static void lp5523_stop_engine(struct lp55xx_chip *chip)
 {
 	enum lp55xx_engine_index idx = chip->engine_idx;
 	static const u8 mask[] = {
+		[LP55XX_ENGINE_INVALID] = 0,
 		[LP55XX_ENGINE_1] = LP5523_MODE_ENG1_M,
 		[LP55XX_ENGINE_2] = LP5523_MODE_ENG2_M,
 		[LP55XX_ENGINE_3] = LP5523_MODE_ENG3_M,
@@ -508,6 +512,7 @@ static int lp5523_load_mux(struct lp55xx_chip *chip, u16 mux, int nr)
 	struct lp55xx_engine *engine = &chip->engines[nr - 1];
 	int ret;
 	static const u8 mux_page[] = {
+		[LP55XX_ENGINE_INVALID] = 0,
 		[LP55XX_ENGINE_1] = LP5523_PAGE_MUX1,
 		[LP55XX_ENGINE_2] = LP5523_PAGE_MUX2,
 		[LP55XX_ENGINE_3] = LP5523_PAGE_MUX3,
@@ -673,6 +678,31 @@ release_lock:
 	return pos;
 }
 
+static ssize_t lp5523_onofftest(struct device *dev,
+			       struct device_attribute *attr,
+			       char *buf)
+{
+	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	struct lp55xx_chip *chip = led->chip;
+	int i, ret, pos = 0;
+
+	mutex_lock(&chip->lock);
+
+	test_toggle ^= 0xff;
+	pos += sprintf(buf + pos, "turn %s, 0x%02x\n", test_toggle ? "on" : "off", test_toggle);
+
+	for (i = 0; i < LP5523_MAX_LEDS; i++) {
+		ret = lp55xx_write(chip, LP5523_REG_LED_PWM_BASE + i,
+				test_toggle);
+		if (ret < 0)
+			LED_E("[%d] onoff fail\n", ret);
+	}
+
+	mutex_unlock(&chip->lock);
+
+	return pos;
+}
+
 #define show_fader(nr)						\
 static ssize_t show_master_fader##nr(struct device *dev,	\
 			    struct device_attribute *attr,	\
@@ -826,6 +856,7 @@ static LP55XX_DEV_ATTR_WO(engine1_load, store_engine1_load);
 static LP55XX_DEV_ATTR_WO(engine2_load, store_engine2_load);
 static LP55XX_DEV_ATTR_WO(engine3_load, store_engine3_load);
 static LP55XX_DEV_ATTR_RO(selftest, lp5523_selftest);
+static LP55XX_DEV_ATTR_RO(onofftest, lp5523_onofftest);
 static LP55XX_DEV_ATTR_RW(master_fader1, show_master_fader1,
 			  store_master_fader1);
 static LP55XX_DEV_ATTR_RW(master_fader2, show_master_fader2,
@@ -846,6 +877,7 @@ static struct attribute *lp5523_attributes[] = {
 	&dev_attr_engine2_leds.attr,
 	&dev_attr_engine3_leds.attr,
 	&dev_attr_selftest.attr,
+	&dev_attr_onofftest.attr,
 	&dev_attr_master_fader1.attr,
 	&dev_attr_master_fader2.attr,
 	&dev_attr_master_fader3.attr,

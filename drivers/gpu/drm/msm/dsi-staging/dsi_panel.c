@@ -24,6 +24,14 @@
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+#include "../lge/lge_dsi_panel.h"
+#include <soc/qcom/lge/board_lge.h>
+#include "../lge/factory/lge_factory.h"
+
+extern int lge_get_mfts_mode(void);
+#endif
+
 /**
  * topology is currently defined by a set of following 3 values:
  * 1. num of layer mixers
@@ -348,7 +356,11 @@ int dsi_panel_trigger_esd_attack(struct dsi_panel *panel)
 	return -EINVAL;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak int dsi_panel_reset(struct dsi_panel *panel)
+#else
 static int dsi_panel_reset(struct dsi_panel *panel)
+#endif
 {
 	int rc = 0;
 	struct dsi_panel_reset_config *r_config = &panel->reset_config;
@@ -409,7 +421,11 @@ exit:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+int dsi_panel_set_pinctrl_state(struct dsi_panel *panel, bool enable)
+#else
 static int dsi_panel_set_pinctrl_state(struct dsi_panel *panel, bool enable)
+#endif
 {
 	int rc = 0;
 	struct pinctrl_state *state;
@@ -431,7 +447,11 @@ static int dsi_panel_set_pinctrl_state(struct dsi_panel *panel, bool enable)
 }
 
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak int dsi_panel_power_on(struct dsi_panel *panel)
+#else
 static int dsi_panel_power_on(struct dsi_panel *panel)
+#endif
 {
 	int rc = 0;
 
@@ -471,7 +491,11 @@ exit:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak int dsi_panel_power_off(struct dsi_panel *panel)
+#else
 static int dsi_panel_power_off(struct dsi_panel *panel)
+#endif
 {
 	int rc = 0;
 
@@ -496,8 +520,14 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 
 	return rc;
 }
+
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
+				enum dsi_cmd_set_type type)
+#else
 static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 				enum dsi_cmd_set_type type)
+#endif
 {
 	int rc = 0, i = 0;
 	ssize_t len;
@@ -607,8 +637,13 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak int dsi_panel_update_backlight(struct dsi_panel *panel,
+	u32 bl_lvl)
+#else
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
+#endif
 {
 	int rc = 0;
 	struct mipi_dsi_device *dsi;
@@ -872,6 +907,14 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 		goto error;
 	}
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+	rc = utils->read_u32(utils->data,
+				"lge,mdss-dsi-panel-framerate-div",
+				&mode->refresh_rate_div);
+	if (rc) {
+		mode->refresh_rate_div = 0;
+	}
+#endif
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-panel-width",
 				  &mode->h_active);
 	if (rc) {
@@ -1747,6 +1790,8 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"ROI not parsed from DTSI, generated dynamically",
 	"qcom,mdss-dsi-timing-switch-command",
 	"qcom,mdss-dsi-post-mode-switch-on-command",
+	"qcom,mdss-dsi-low-persist-mode-off-command",
+	"qcom,mdss-dsi-low-persist-mode-on-command",
 	"qcom,mdss-dsi-qsync-on-commands",
 	"qcom,mdss-dsi-qsync-off-commands",
 };
@@ -1773,11 +1818,17 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"ROI not parsed from DTSI, generated dynamically",
 	"qcom,mdss-dsi-timing-switch-command-state",
 	"qcom,mdss-dsi-post-mode-switch-on-command-state",
+	"qcom,mdss-dsi-low-persist-mode-off-command-state",
+	"qcom,mdss-dsi-low-persist-mode-on-command-state",
 	"qcom,mdss-dsi-qsync-on-commands-state",
 	"qcom,mdss-dsi-qsync-off-commands-state",
 };
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
+#else
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
+#endif
 {
 	const u32 cmd_set_min_size = 7;
 	u32 count = 0;
@@ -1801,10 +1852,17 @@ static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+int dsi_panel_create_cmd_packets(const char *data,
+					u32 length,
+					u32 count,
+					struct dsi_cmd_desc *cmd)
+#else
 static int dsi_panel_create_cmd_packets(const char *data,
 					u32 length,
 					u32 count,
 					struct dsi_cmd_desc *cmd)
+#endif
 {
 	int rc = 0;
 	int i, j;
@@ -1846,7 +1904,11 @@ error_free_payloads:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set)
+#else
 static void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set)
+#endif
 {
 	u32 i = 0;
 	struct dsi_cmd_desc *cmd;
@@ -1862,8 +1924,13 @@ static void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set)
 	kfree(set->cmds);
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
+					u32 packet_count)
+#else
 static int dsi_panel_alloc_cmd_packets(struct dsi_panel_cmd_set *cmd,
 					u32 packet_count)
+#endif
 {
 	u32 size;
 
@@ -2621,6 +2688,34 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		pr_debug("dsc compression is not enabled for the mode");
 		return 0;
 	}
+	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-version", &data);
+	if (rc) {
+		priv_info->dsc.version = 0x11;
+		rc = 0;
+	} else {
+		priv_info->dsc.version = data & 0xff;
+		/* only support DSC 1.1 rev */
+		if (priv_info->dsc.version != 0x11) {
+			pr_err("%s: DSC version:%d not supported\n", __func__,
+					priv_info->dsc.version);
+			rc = -EINVAL;
+			goto error;
+		}
+	}
+	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-scr-version", &data);
+	if (rc) {
+		priv_info->dsc.scr_rev = 0x0;
+		rc = 0;
+	} else {
+		priv_info->dsc.scr_rev = data & 0xff;
+		/* only one scr rev supported */
+		if (priv_info->dsc.scr_rev > 0x1) {
+			pr_err("%s: DSC scr version:%d not supported\n",
+					__func__, priv_info->dsc.scr_rev);
+			rc = -EINVAL;
+			goto error;
+		}
+	}
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-version", &data);
 	if (rc) {
@@ -2917,6 +3012,13 @@ static int dsi_panel_parse_partial_update_caps(struct dsi_display_mode *mode,
 	roi_caps = &mode->priv_info->roi_caps;
 
 	memset(roi_caps, 0, sizeof(*roi_caps));
+
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+	if (lge_get_factory_boot() || lge_get_mfts_mode()) {
+		pr_info("partial update disabled for factory\n");
+		return 0;
+	}
+#endif
 
 	data = utils->get_property(utils->data,
 		"qcom,partial-update-enabled", NULL);
@@ -3381,6 +3483,9 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (rc)
 		pr_debug("failed to parse esd config, rc=%d\n", rc);
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+	lge_dsi_panel_get(panel, of_node);
+#endif
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 	drm_panel_init(&panel->drm_panel);
 	mutex_init(&panel->panel_lock);
@@ -3393,6 +3498,9 @@ error:
 
 void dsi_panel_put(struct dsi_panel *panel)
 {
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+	lge_dsi_panel_put(panel);
+#endif
 	/* free resources allocated for ESD check */
 	dsi_panel_esd_config_deinit(&panel->esd_config);
 
@@ -3452,6 +3560,13 @@ int dsi_panel_drv_init(struct dsi_panel *panel,
 		goto error_gpio_release;
 	}
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+	rc = lge_dsi_panel_drv_init(panel);
+	if (rc) {
+		goto error_gpio_release;
+	}
+#endif
+
 	goto exit;
 
 error_gpio_release:
@@ -3475,6 +3590,10 @@ int dsi_panel_drv_deinit(struct dsi_panel *panel)
 	}
 
 	mutex_lock(&panel->panel_lock);
+
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+	lge_dsi_panel_drv_deinit(panel);
+#endif
 
 	rc = dsi_panel_bl_unregister(panel);
 	if (rc)
@@ -3799,6 +3918,9 @@ int dsi_panel_get_host_cfg_for_mode(struct dsi_panel *panel,
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_pre_prepare(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -3862,6 +3984,9 @@ error:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_set_lp1(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -3896,6 +4021,9 @@ exit:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_set_lp2(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -3918,6 +4046,9 @@ exit:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_set_nolp(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -3948,6 +4079,9 @@ exit:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_prepare(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -4256,6 +4390,8 @@ int dsi_panel_post_switch(struct dsi_panel *panel)
 int dsi_panel_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
+	struct mipi_dsi_device *dsi;
+	dsi = &panel->mipi_device;
 
 	if (!panel) {
 		pr_err("Invalid params\n");
@@ -4274,6 +4410,9 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_post_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -4362,6 +4501,9 @@ int dsi_panel_disable(struct dsi_panel *panel)
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_unprepare(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -4385,6 +4527,9 @@ error:
 	return rc;
 }
 
+#if IS_ENABLED(CONFIG_LGE_DISPLAY_COMMON)
+__weak
+#endif
 int dsi_panel_post_unprepare(struct dsi_panel *panel)
 {
 	int rc = 0;

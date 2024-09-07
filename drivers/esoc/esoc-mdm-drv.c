@@ -15,6 +15,9 @@
 #include <linux/reboot.h>
 #include <linux/of.h>
 #include <linux/esoc_client.h>
+#if defined (CONFIG_MACH_SM8150_FLASH) || defined (CONFIG_MACH_SM8150_MH2LM_5G)
+#include <soc/qcom/lge/lge_handle_panic.h>
+#endif
 #include "esoc.h"
 #include "esoc-mdm.h"
 #include "mdm-dbg.h"
@@ -413,6 +416,9 @@ static int mdm_handle_boot_fail(struct esoc_clink *esoc_clink, u8 *pon_trial)
 		break;
 	case BOOT_FAIL_ACTION_PANIC:
 		esoc_mdm_log("Calling panic!!\n");
+#if defined (CONFIG_MACH_SM8150_FLASH) || defined (CONFIG_MACH_SM8150_MH2LM_5G)
+		lge_set_subsys_crash_reason("esoc0", LGE_ERR_SUB_PWR);
+#endif
 		panic("Panic requested on external modem boot failure\n");
 		break;
 	case BOOT_FAIL_ACTION_NOP:
