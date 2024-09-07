@@ -2527,6 +2527,26 @@ void console_flush_on_panic(void)
 	console_unlock();
 }
 
+#ifdef CONFIG_MACH_LGE
+static atomic_t console_uart = ATOMIC_INIT(1);
+void console_uart_enable(void)
+{
+	console_flush_on_panic();
+	atomic_inc(&console_uart);
+}
+
+void console_uart_disable(void)
+{
+	atomic_dec(&console_uart);
+	console_flush_on_panic();
+}
+
+int console_uart_status(void)
+{
+	return (int)atomic_read(&console_uart);
+}
+#endif
+
 /*
  * Return the console tty driver structure and its associated index
  */

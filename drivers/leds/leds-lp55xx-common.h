@@ -203,4 +203,6 @@ extern void lp55xx_unregister_sysfs(struct lp55xx_chip *chip);
 extern struct lp55xx_platform_data
 *lp55xx_of_populate_pdata(struct device *dev, struct device_node *np);
 
+static u8 test_toggle;
+
 #endif /* _LEDS_LP55XX_COMMON_H */

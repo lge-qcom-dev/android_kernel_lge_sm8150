@@ -204,6 +204,11 @@ static void lp55xx_firmware_loaded(const struct firmware *fw, void *context)
 		return;
 	}
 
+	if (idx == LP55XX_ENGINE_INVALID) {
+		dev_err(dev, "idx value is invalid\n");
+		goto out;
+	}
+
 	/* handling firmware data is chip dependent */
 	mutex_lock(&chip->lock);
 
@@ -378,6 +383,7 @@ bool lp55xx_is_extclk_used(struct lp55xx_chip *chip)
 	return true;
 
 use_internal_clk:
+	devm_clk_put(&chip->cl->dev, clk);
 	dev_info(&chip->cl->dev, "internal clock used\n");
 	return false;
 }
