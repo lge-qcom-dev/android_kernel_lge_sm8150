@@ -102,7 +102,6 @@ static inline long gup_local(struct mm_struct *mm, uintptr_t start,
 
 	if (write)
 		gup_flags |= FOLL_WRITE;
-	/* gup_flags |= FOLL_CMA; */
 
 	return get_user_pages_remote(NULL, mm, start, nr_pages, gup_flags,
 				    0, pages, NULL);
@@ -481,13 +480,17 @@ struct tee_mmu *tee_mmu_create(struct mm_struct *mm,
 			 * Linux creates (page faults) the underlying pages if
 			 * missing.
 			 */
-			gup_ret = get_user_pages_foll_cma(NULL, mm, (uintptr_t)reader,
-					nr_pages, 1, 0, pages,
-					NULL);
+			gup_ret = gup_local_repeat(mm, (uintptr_t)reader,
+						   nr_pages, 1, pages);
 			if ((gup_ret == -EFAULT) && !writeable) {
-				gup_ret = get_user_pages_foll_cma(NULL, mm, (uintptr_t)reader,
-						nr_pages, 0, 0, pages,
-						NULL);
+				/*
+				 * If mapping read/write fails, and the buffer
+				 * is to be shared as input only, try to map
+				 * again read-only.
+				 */
+				gup_ret = gup_local_repeat(mm,
+							   (uintptr_t)reader,
+							   nr_pages, 0, pages);
 			}
 			up_read(&mm->mmap_sem);
 			if (gup_ret < 0) {
