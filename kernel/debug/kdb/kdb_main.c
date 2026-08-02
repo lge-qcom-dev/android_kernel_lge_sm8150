@@ -2571,7 +2571,7 @@ static int kdb_summary(int argc, const char **argv)
 	kdb_printf("domainname %s\n", init_uts_ns.name.domainname);
 	kdb_printf("ccversion  %s\n", __stringify(CCVERSION));
 
-	now = __current_kernel_time();
+	now = current_kernel_time();
 	kdb_gmtime(&now, &tm);
 	kdb_printf("date       %04d-%02d-%02d %02d:%02d:%02d "
 		   "tz_minuteswest %d\n",
