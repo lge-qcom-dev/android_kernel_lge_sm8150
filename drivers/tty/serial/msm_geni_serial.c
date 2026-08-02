@@ -428,12 +428,8 @@ enum {
 	UART_CONSOLE_ENABLED,
 	UART_CONSOLE_PREPARE,
 };
-#define VOLUP_KEY_PRESSED 0x1
-#define POW_KEY_PRESSED 0x2
-#define VOLUP_AND_POWER_PRESS (VOLUP_KEY_PRESSED | POW_KEY_PRESSED)
 static int g_ms_status = UART_CONSOLE_PREPARE;
 static struct delayed_work uart_console_work;
-extern int uart_key_press_status;
 #endif
 
 static void msm_geni_serial_config_port(struct uart_port *uport, int cfg_flags)
@@ -2691,10 +2687,6 @@ static unsigned int msm_geni_serial_tx_empty(struct uart_port *uport)
 #ifdef CONFIG_LGE_USB_DEBUGGER
 void msm_geni_serial_set_uart_console_status(int status)
 {
-	if(uart_key_press_status != VOLUP_AND_POWER_PRESS && status == UART_CONSOLE_ENABLED) {
-		pr_info("geni_uart_console_status : power/volup keys are not pressed\n");
-		return;
-	}
 	pr_info("geni_uart_console_status : %d to %d\n",g_ms_status, status);
 	g_ms_status = status;
 }
@@ -2717,10 +2709,6 @@ int msm_geni_serial_set_uart_console(int enable)
 		pr_err("Not normal mode. Just return\n");
 		return ret;
 	} 
-	if(uart_key_press_status != VOLUP_AND_POWER_PRESS && enable) {
-		pr_err("Power/volup are not pressed. Block uart resume\n");
-		return ret;
-	}
 	dev_port = get_port_from_line(0, true);
 	if (IS_ERR_OR_NULL(dev_port)) {
 		ret = PTR_ERR(dev_port);
