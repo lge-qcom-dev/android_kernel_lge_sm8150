@@ -235,7 +235,7 @@ void write_file(struct device *dev, char *data, int write_time)
 
 	if (fd >= 0) {
 		if (write_time == TIME_INFO_WRITE) {
-			my_time = __current_kernel_time();
+			my_time = current_kernel_time();
 			time_to_tm(my_time.tv_sec,
 					sys_tz.tz_minuteswest * 60 * (-1),
 					&my_date);
