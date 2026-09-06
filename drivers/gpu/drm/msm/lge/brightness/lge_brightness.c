@@ -238,7 +238,6 @@ int lge_backlight_device_update_status(struct backlight_device *bd)
 			(bd->props.state & BL_CORE_SUSPENDED)) {
 		if (!panel->lge.panel_dead && !c_conn->panel_dead) {
 			brightness = 0;
-			bd->props.brightness = 0;
 		}
 	}
 
