@@ -77,10 +77,6 @@
 	reg = <0 0x9e400000 0 0x1c00000>;
 };
 
-&disp_rdump_memory {
-        reg = <0x0 0x9c000000 0x0 0x01200000>;
-};
-
 &pil_adsp_mem {
 	reg = <0 0x8be00000 0 0x2200000>;
 };
